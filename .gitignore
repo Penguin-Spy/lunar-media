@@ -1,0 +1,10 @@
+# these must be copied from your VLC install
+/plugins
+libvlc.dll
+libvlccore.dll
+
+# output binary
+*.exe
+
+# testing files
+*.mp3
