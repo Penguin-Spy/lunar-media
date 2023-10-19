@@ -7,7 +7,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
+#include <unistd.h>
+#include <pthread.h>
 
 #include "vlc/vlc.h"
 #include "lua/lua.h"
@@ -16,9 +17,9 @@
 
 #include "vlc.h"
 #include "script.h"
+#include "native.h"
 #include "luautil.h"
-
-#define error(s, ...) fprintf(stderr, s, __VA_ARGS__)
+#include "lunar-media.h"
 
 int main(int argc, char* argv[]) {
 
@@ -34,9 +35,11 @@ int main(int argc, char* argv[]) {
 
   vlc_init();
   script_init();
+  native_init();
 
   printf("lua version: %s\n", LUA_RELEASE);
   lua_State* L = luaL_newstate();
+
   luaL_openlibs(L);     // open standard libraries
   vlc_open_lua_lib(L);  // add our vlc library
   script_open_lua_lib(L);
@@ -45,48 +48,18 @@ int main(int argc, char* argv[]) {
 
 
   // windows shenanigans & event loop
-  // TODO: do this cross platform? put this in it's own file
+  pthread_t thread_id;
+  printf("b4 thread\n");
+  pthread_create(&thread_id, NULL, native_exec, NULL);
+  printf("thread id: %lli\n", thread_id);
+  pthread_join(thread_id, NULL);
+  printf("after thread join\n");
 
-  WINBOOL success = RegisterHotKey(NULL, 0, 0, VK_MEDIA_PLAY_PAUSE);
-  if(!success) {
-    error("hotkey VK_MEDIA_PLAY_PAUSE failed: %lu", GetLastError());
-  }
-  success = RegisterHotKey(NULL, 1, 0, VK_MEDIA_NEXT_TRACK);
-  if(!success) {
-    error("hotkey VK_MEDIA_NEXT_TRACK failed: %lu", GetLastError());
-  }
-  success = RegisterHotKey(NULL, 2, 0, VK_MEDIA_PREV_TRACK);
-  if(!success) {
-    error("hotkey VK_MEDIA_PREV_TRACK failed: %lu", GetLastError());
-  }
+  //native_exec(NULL);
 
-  MSG msg = { 0 };
-  while(GetMessageW(&msg, NULL, 0, 0) != 0) {
-    //printf("\nmessage: %u", msg.message);
-    if(msg.message == WM_HOTKEY) {
-      //printf(" got hotkey %llu", msg.wParam);
-      switch(msg.wParam) {
-        case 0:
-          script_raise_event(L, EVENT_MEDIA_PLAY_PAUSE);
-          break;
-        case 1:
-          script_raise_event(L, EVENT_MEDIA_NEXT_TRACK);
-          break;
-        case 2:
-          script_raise_event(L, EVENT_MEDIA_PREVIOUS_TRACK);
-          break;
-      }
-    }
-    if(msg.message == WM_APPCOMMAND) {
-      printf(" got appcommand");
-      switch(GET_APPCOMMAND_LPARAM(msg.lParam)) {
-        case APPCOMMAND_MEDIA_PLAY_PAUSE:
-          printf(" play/pause");
-          break;
-        default:
-          printf("%i", GET_APPCOMMAND_LPARAM(msg.lParam));
-      }
-    }
+  while(true) {
+    sleep(1);
+    printf(".");
   }
 
   // Stop playing

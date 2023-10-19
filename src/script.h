@@ -1,10 +1,9 @@
-
-#define LUNAR_MEDIA_REGISTRY_KEY "lunar-media"
-#define push_registry_table(L) (lua_pushliteral(L, LUNAR_MEDIA_REGISTRY_KEY), lua_rawget(L, LUA_REGISTRYINDEX))
+#include "lua/lua.h"
 
 #define EVENT_MEDIA_PLAY_PAUSE "media_play_pause"
 #define EVENT_MEDIA_NEXT_TRACK "media_next_track"
 #define EVENT_MEDIA_PREVIOUS_TRACK "media_previous_track"
+#define EVENT_PLAYBACK_COMPLETE "playback_complete"
 
 void script_init();
 

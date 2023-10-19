@@ -10,8 +10,10 @@
 #include "luautil.h"
 #include "script.h"
 
-const char* const event_names[] = { EVENT_MEDIA_PLAY_PAUSE, EVENT_MEDIA_NEXT_TRACK, EVENT_MEDIA_PREVIOUS_TRACK, NULL };
+const char* const event_names[] = { EVENT_MEDIA_PLAY_PAUSE, EVENT_MEDIA_NEXT_TRACK, EVENT_MEDIA_PREVIOUS_TRACK, EVENT_PLAYBACK_COMPLETE, NULL };
 
+#define LUNAR_MEDIA_REGISTRY_KEY "lunar-media"
+#define push_registry_table(L) (lua_pushliteral(L, LUNAR_MEDIA_REGISTRY_KEY), lua_rawget(L, LUA_REGISTRYINDEX))
 
 void script_init() {
   printf("initalizing script\n");
@@ -24,6 +26,7 @@ int script_raise_event(lua_State* L, const char* event) {
   if(lua_isfunction(L, -1)) { // may be nil if the handler hasn't been registered yet
     return report(L, docall(L, 0, 0));
   }
+  return LUA_OK;
 }
 
 int script_on(lua_State* L) {

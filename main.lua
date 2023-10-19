@@ -21,15 +21,22 @@ script.on("media_previous_track", function()
   vlc.pause()
 end)
 
+script.on("playback_complete", function()
+  print("playback complete")
+end)
+
 --script.exit()
 
 
-vlc.play("Reach for the Summit.mp3")
+--vlc.play("Reach for the Summit.mp3")
+vlc.play("Chapter Complete - Ascending B-Sides.mp3")
 
 vlc.set_volume(70) -- (0 = mute, 100 = 0dB)
---vlc.pause()
---vlc.resume()
 --vlc.stop()
 
 print("lunar-media registry contents:")
 dump(debug.getregistry()["lunar-media"])
+
+
+local a, b = io.read()
+print("io.read: " .. tostring(a) .. " " .. tostring(b))

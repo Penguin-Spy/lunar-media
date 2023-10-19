@@ -11,6 +11,7 @@ description = {
 }
 dependencies = {
    "lua ~> 5.4",
-   "luafilesystem"
+   "luafilesystem",
+   "lunajson"
 }
 build = { type = "none" }
