@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
+#include <pthread.h>
 
 #include "lua/lua.h"
 #include "lua/lauxlib.h"
@@ -15,18 +15,40 @@ const char* const event_names[] = { EVENT_MEDIA_PLAY_PAUSE, EVENT_MEDIA_NEXT_TRA
 #define LUNAR_MEDIA_REGISTRY_KEY "lunar-media"
 #define push_registry_table(L) (lua_pushliteral(L, LUNAR_MEDIA_REGISTRY_KEY), lua_rawget(L, LUA_REGISTRYINDEX))
 
+pthread_mutex_t luaStateMutex = PTHREAD_MUTEX_INITIALIZER;
+lua_State* global_L;
+
 void script_init() {
   printf("initalizing script\n");
 }
 
-int script_raise_event(lua_State* L, const char* event) {
-  push_registry_table(L);
+int script_raise_event(const char* event) {
+  /*push_registry_table(L);
   lua_pushstring(L, event);
   lua_rawget(L, -2);
   if(lua_isfunction(L, -1)) { // may be nil if the handler hasn't been registered yet
     return report(L, docall(L, 0, 0));
   }
-  return LUA_OK;
+  return LUA_OK;*/
+
+  pthread_mutex_lock(&luaStateMutex);
+  int nres = 0;
+  lua_pushstring(global_L, event); // resume with event name as arg
+  int status = lua_resume(global_L, NULL, 1, &nres);
+  pthread_mutex_unlock(&luaStateMutex);
+
+  return status;
+}
+
+int script_raise_key_event(const char* key) {
+  pthread_mutex_lock(&luaStateMutex);
+  int nres = 0;
+  lua_pushliteral(global_L, EVENT_KEY); // resume with event name, key
+  lua_pushstring(global_L, key);
+  int status = lua_resume(global_L, NULL, 2, &nres);
+  pthread_mutex_unlock(&luaStateMutex);
+
+  return status;
 }
 
 int script_on(lua_State* L) {
@@ -58,5 +80,8 @@ int script_open_lua_lib(lua_State* L) {
 
   luaL_newlib(L, lib);
   lua_setglobal(L, "script");
+
+  global_L = L;
+
   return 0;
 }

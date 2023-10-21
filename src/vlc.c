@@ -93,7 +93,7 @@ int vlc_set_volume(lua_State* L) {
 
 
 void vlc_handle_end_reached(const struct libvlc_event_t* UNUSED(p_event), void* p_data) {
-  script_raise_event((lua_State*)p_data, EVENT_PLAYBACK_COMPLETE);
+  script_raise_event(EVENT_PLAYBACK_COMPLETE);
 }
 
 

@@ -3,7 +3,7 @@ BUILDDIR := build
 
 OBJECTS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(wildcard $(SRCDIR)/*.c))
 
-C_INCLUDES := -Iinclude -I$(SRCDIR) "-LC:\Program Files\VideoLAN\VLC" -llibvlc -LF:\Programming\Libraries\lua-5.4.6\install\lib -llua54
+C_INCLUDES := -Iinclude -I$(SRCDIR) "-LC:\Program Files\VideoLAN\VLC" -llibvlc -LF:\Programming\Libraries\lua-5.4.6\install\lib -llua54 -LC:\msys64\mingw64\bin -llibncursesw6
 C_ARGS := -Wall -Wextra -Wconversion -pedantic
 
 ifeq ($(OS),Windows_NT)

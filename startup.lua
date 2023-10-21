@@ -1,1 +1,0 @@
-print("No bootable media found.")
