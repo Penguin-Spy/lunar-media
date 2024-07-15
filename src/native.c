@@ -96,7 +96,7 @@ void native_init() {
   }
 }
 
-void native_2(void* arg) {
+void* native_2(void* arg) {
   //lua_State* L = arg;
   printf("in thread\n");
 
@@ -174,7 +174,7 @@ void native_2(void* arg) {
   SetConsoleMode(hStdin, fdwSaveOldMode);
   printf("key read thread closing");
 
-  return;
+  return NULL;
 }
 
 // entrypoint of the event loop thread

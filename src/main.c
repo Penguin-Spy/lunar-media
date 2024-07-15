@@ -1,8 +1,10 @@
-/* Copyright © Penguin_Spy 2023
+/* Copyright © Penguin_Spy 2024
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ * This Source Code Form is "Incompatible With Secondary Licenses", as
+ * defined by the Mozilla Public License, v. 2.0.
  */
 
 #include <stdio.h>
@@ -11,12 +13,14 @@
 #include <pthread.h>
 #include <locale.h>
 
-#include "ncurses/ncurses.h"
-
 #include "vlc/vlc.h"
-#include "lua/lua.h"
-#include "lua/lauxlib.h"
-#include "lua/lualib.h"
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+
+#include "raylib.h"
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 
 #include "vlc.h"
 #include "script.h"
@@ -31,9 +35,6 @@ int main(int argc, char* argv[]) {
   }
 
   printf("hello world? 2\n");
-
-  //SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
-  //GetModuleHandle(NULL);
 
   char* locale = setlocale(LC_ALL, "en_US.UTF-8");
   printf("locale set: %s", locale);
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]) {
   pthread_join(thread_id, NULL);
   printf("after thread join\n");*/
 
-  native_exec(NULL/*L*/);
+  //native_exec(NULL/*L*/);
 
   //int c = getc(stdin);
   //printf("got %i", c);
@@ -75,13 +76,33 @@ int main(int argc, char* argv[]) {
   nocbreak();
   printf("got %i", c);*/
 
+  InitWindow(400, 200, "raygui - controls test suite");
+  SetWindowState(FLAG_WINDOW_RESIZABLE);
+  SetTargetFPS(60);
 
-  while(true) {
-    sleep(1);
-    printf(".");
+  bool showMessageBox = false;
+
+  while(!WindowShouldClose()) {
+    // Draw
+    //----------------------------------------------------------------------------------
+    BeginDrawing();
+    ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
+
+    if(GuiButton((Rectangle) { 24, 24, 120, 30 }, "#191#Show Message")) showMessageBox = true;
+
+    if(showMessageBox) {
+      int result = GuiMessageBox((Rectangle) { 85, 70, 250, 100 },
+        "#190#Message Box", "Hi! This is a message!", "Nice;Cool");
+
+      if(result >= 0) showMessageBox = false;
+    }
+
+    EndDrawing();
   }
 
-  // Stop playing
+  CloseWindow();
+
+// Stop playing
   vlc_stop(L);
   vlc_release();
 

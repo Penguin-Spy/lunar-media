@@ -4,7 +4,6 @@ libvlc.dll
 libvlccore.dll
 
 # output binary
-build/
 *.exe
 
 # testing files
