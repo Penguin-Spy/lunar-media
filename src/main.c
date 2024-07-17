@@ -8,28 +8,22 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
+#include <stdbool.h>
 #include <locale.h>
 
-#include "vlc/vlc.h"
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-
-#include "raylib.h"
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
+#include <SDL.h>
+#include <SDL_ttf.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #include "vlc.h"
 #include "script.h"
-#include "native.h"
+#include "gui.h"
 #include "luautil.h"
 #include "lunar-media.h"
 
 int main(int argc, char* argv[]) {
-
   for(int i = 0; i < argc; i++) {
     printf("  argv[%i]: %s\n", i, argv[i]);
   }
@@ -37,11 +31,15 @@ int main(int argc, char* argv[]) {
   printf("hello world? 2\n");
 
   char* locale = setlocale(LC_ALL, "en_US.UTF-8");
-  printf("locale set: %s", locale);
+  printf("locale set: %s\n", locale);
 
   vlc_init();
   script_init();
-  native_init();
+  gui_init();
+  TTF_Font* font = gui_load_font("Montserrat-Regular.ttf");
+
+  int window_width, window_height;
+  gui_get_window_size(&window_width, &window_height);
 
   printf("lua version: %s\n", LUA_RELEASE);
   lua_State* L = luaL_newstate();
@@ -58,49 +56,27 @@ int main(int argc, char* argv[]) {
   }
   report(L, status);
 
+  gui_text_element* msg1 = gui_create_text_element(font, "hi", (window_width) / 2, 125 - 45);
+  gui_create_text_element(font, "this is cool", (window_width) / 2, 125);
+  gui_create_text_element(font, "2-19 Calamari Inkantation (シオカラ節).mp3", (window_width) / 2, 400);
 
-  // windows shenanigans & event loop
-  /*pthread_t thread_id;
-  printf("b4 thread\n");
-  pthread_create(&thread_id, NULL, native_exec, NULL);
-  printf("thread id: %lli\n", thread_id);
-  pthread_join(thread_id, NULL);
-  printf("after thread join\n");*/
-
-  //native_exec(NULL/*L*/);
-
-  //int c = getc(stdin);
-  //printf("got %i", c);
-  /*cbreak();
-  int c = getchar();
-  nocbreak();
-  printf("got %i", c);*/
-
-  InitWindow(400, 200, "raygui - controls test suite");
-  SetWindowState(FLAG_WINDOW_RESIZABLE);
-  SetTargetFPS(60);
-
-  bool showMessageBox = false;
-
-  while(!WindowShouldClose()) {
-    // Draw
-    //----------------------------------------------------------------------------------
-    BeginDrawing();
-    ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR)));
-
-    if(GuiButton((Rectangle) { 24, 24, 120, 30 }, "#191#Show Message")) showMessageBox = true;
-
-    if(showMessageBox) {
-      int result = GuiMessageBox((Rectangle) { 85, 70, 250, 100 },
-        "#190#Message Box", "Hi! This is a message!", "Nice;Cool");
-
-      if(result >= 0) showMessageBox = false;
+  bool quit = false;
+  int x_thing = msg1->position.x;
+  while(!quit) {
+    SDL_Event e;
+    SDL_WaitEvent(&e);
+    if(e.type == SDL_QUIT) {
+      quit = true;
     }
 
-    EndDrawing();
+    // TODO: don't re-render if nothing's changed, it causes up to 30% GPU usage unnecessarily
+    gui_render();
+
+    x_thing = x_thing > window_width ? 0 : x_thing + 1;
+    msg1->position.x = x_thing;
   }
 
-  CloseWindow();
+  gui_quit();
 
 // Stop playing
   vlc_stop(L);

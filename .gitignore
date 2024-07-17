@@ -8,3 +8,5 @@ libvlccore.dll
 
 # testing files
 *.mp3
+
+.vscode/c_cpp_properties.json

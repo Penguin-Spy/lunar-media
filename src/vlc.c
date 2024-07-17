@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "vlc/vlc.h"
-#include "lua/lua.h"
-#include "lua/lauxlib.h"
+#include <vlc/vlc.h>
+#include <lua.h>
+#include <lauxlib.h>
 
 #include "script.h"
 #include "lunar-media.h"
@@ -92,7 +92,7 @@ int vlc_set_volume(lua_State* L) {
 }
 
 
-void vlc_handle_end_reached(const struct libvlc_event_t* UNUSED(p_event), void* p_data) {
+void vlc_handle_end_reached(const struct libvlc_event_t* UNUSED(p_event), void* UNUSED(p_data)) {
   script_raise_event(EVENT_PLAYBACK_COMPLETE);
 }
 
