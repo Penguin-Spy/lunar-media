@@ -7,6 +7,13 @@
 #include <SDL_ttf.h>
 
 typedef enum { TEXT, BUTTON, FLOW } gui_element_type;
+#define GUI_ELEMENT_ROOT "theme"
+#define GUI_ELEMENT_FLOW "flow"
+#define GUI_ELEMENT_LABEL "label"
+
+#define GUI_ATTRIBUTE_DIRECTION "direction"
+#define GUI_ATTRIBUTE_DIRECTION_HORIZONTAL "horizontal"
+#define GUI_ATTRIBUTE_DIRECTION_VERTICAL "vertical"
 
 typedef struct {
   SDL_Texture* texture;
@@ -39,6 +46,7 @@ int gui_init();
 int gui_quit();
 void gui_get_window_size(int* w, int* h);
 TTF_Font* gui_load_font(char* filename);
+void gui_load_document(char* filename);
 
 void gui_add_child(gui_element* parent, gui_element* element);
 gui_element* gui_create_text_element(TTF_Font* font, char* string);

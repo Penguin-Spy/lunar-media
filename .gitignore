@@ -2,11 +2,17 @@
 plugins/
 libvlc.dll
 libvlccore.dll
+# other libs
+SDL2.dll
+SDL2_ttf.dll
+README-SDL.txt
 
 # output binary
 *.exe
 
 # testing files
 *.mp3
+*.ttf
+*.otf
 
 .vscode/c_cpp_properties.json

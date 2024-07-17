@@ -12,6 +12,8 @@
 #define MAX(a,b) (((a) > (b) ? (a) : (b)))
 #define MIN(a,b) (((a) < (b) ? (a) : (b)))
 
+#define strequal(s1, s2) (strcmp(s1, s2) == 0)
+
 // https://stackoverflow.com/a/12891181
 #ifdef __GNUC__
 #  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))

@@ -3,6 +3,7 @@
 
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <ezxml.h>
 
 #include "gui.h"
 #include "lunar-media.h"
@@ -11,6 +12,7 @@ SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
 gui_element* gui_root = NULL;
+TTF_Font* default_font;
 
 int gui_init() {
   if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -77,6 +79,8 @@ TTF_Font* gui_load_font(char* filename) {
       "SDL2_ttf Error: %s\n", filename, TTF_GetError());
     return NULL;
   }
+  // TODO: allow themes to specify the font(s) to use, including default font
+  default_font = font;
   return font;
 }
 
@@ -148,6 +152,46 @@ gui_element* gui_create_flow_element(bool direction) {
   element->children = NULL;
   element->sibling = NULL;
   return element;
+}
+
+gui_element* load_xml_item(ezxml_t item) {
+  printf("loading '%s' ", item->name);
+  if(strequal(item->name, GUI_ELEMENT_FLOW) || strequal(item->name, GUI_ELEMENT_ROOT)) {
+    printf("as flow ");
+    bool direction = false;
+    for(int i = 0; item->attr[i] != NULL; i += 2) {
+      printf("%s=%s ", item->attr[i], item->attr[i+1]);
+      if(strequal(item->attr[i], GUI_ATTRIBUTE_DIRECTION)) {
+        if(strequal(item->attr[i+1], GUI_ATTRIBUTE_DIRECTION_HORIZONTAL)) {
+          direction = true;
+        }
+      }
+    }
+    printf("\n");
+    gui_element* flow = gui_create_flow_element(direction);
+    item = item->child;
+    while(item != NULL) {
+      gui_add_child(flow, load_xml_item(item));
+      item = item->ordered;
+    }
+    return flow;
+  } else if(strequal(item->name, GUI_ELEMENT_LABEL)) {
+    printf("as label with '%s'\n", item->txt);
+    return gui_create_text_element(default_font, item->txt);
+  } else {
+    error("failed to load document, unknown element '%s'\n", item->name);
+  }
+  return NULL;
+}
+
+void gui_load_document(char* filename) {
+  ezxml_t theme = ezxml_parse_file(filename);
+  if(theme == NULL) {
+    error("failed to parse document: %s\n", filename);
+    return;
+  }
+
+  gui_root = load_xml_item(theme);
 }
 
 // renders all of a flow's children

@@ -46,7 +46,7 @@ on("term_resize", function()
 end)
 
 
-vlc.play("Chapter Complete - Ascending B-Sides.mp3")
+--vlc.play("Chapter Complete - Ascending B-Sides.mp3")
 
 vlc.set_volume(70) -- (0 = mute, 100 = 0dB)
 
