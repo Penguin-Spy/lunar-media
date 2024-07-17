@@ -56,24 +56,48 @@ int main(int argc, char* argv[]) {
   }
   report(L, status);
 
-  gui_text_element* msg1 = gui_create_text_element(font, "hi", (window_width) / 2, 125 - 45);
-  gui_create_text_element(font, "this is cool", (window_width) / 2, 125);
-  gui_create_text_element(font, "2-19 Calamari Inkantation (シオカラ節).mp3", (window_width) / 2, 400);
+  gui_element* msg1 = gui_create_text_element(font, "hi");
+  gui_add_child(gui_root, msg1);
+  gui_add_child(gui_root, gui_create_text_element(font, "2-19 Calamari Inkantation (シオカラ節).mp3"));
 
-  bool quit = false;
-  int x_thing = msg1->position.x;
+  gui_element* flow = gui_create_flow_element(true);
+  gui_add_child(flow, gui_create_text_element(font, "test1,"));
+  gui_add_child(flow, gui_create_text_element(font, "test2,"));
+  gui_element* flow2 = gui_create_flow_element(false);
+  gui_add_child(flow2, gui_create_text_element(font, "vertical1"));
+  gui_add_child(flow2, gui_create_text_element(font, "vertical2"));
+  gui_add_child(flow2, gui_create_text_element(font, "vertical3"));
+  gui_add_child(flow, flow2);
+  gui_add_child(flow, gui_create_text_element(font, "test3"));
+  gui_add_child(flow, gui_create_text_element(font, " test4"));
+  gui_add_child(gui_root, flow);
+
+  gui_add_child(gui_root, gui_create_text_element(font, "a"));
+
+  bool quit = false, resized = true;
   while(!quit) {
     SDL_Event e;
     SDL_WaitEvent(&e);
-    if(e.type == SDL_QUIT) {
-      quit = true;
+    switch(e.type) {
+      case SDL_QUIT: quit = true;
+        break;
+      case SDL_WINDOWEVENT: {
+        if(e.window.event == SDL_WINDOWEVENT_RESIZED || e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+          resized = true;
+          printf("r.");
+        }
+        break;
+      }
+    }
+
+    if(resized) {
+      gui_get_window_size(&window_width, &window_height);
+      resized = false;
+      printf("resized!\n");
     }
 
     // TODO: don't re-render if nothing's changed, it causes up to 30% GPU usage unnecessarily
     gui_render();
-
-    x_thing = x_thing > window_width ? 0 : x_thing + 1;
-    msg1->position.x = x_thing;
   }
 
   gui_quit();

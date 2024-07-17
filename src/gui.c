@@ -5,11 +5,12 @@
 #include <SDL_ttf.h>
 
 #include "gui.h"
+#include "lunar-media.h"
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
-gui_element_list* elements = NULL;
+gui_element* gui_root = NULL;
 
 int gui_init() {
   if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -28,7 +29,7 @@ int gui_init() {
   }
 #endif
 
-  window = SDL_CreateWindow("lunar media",
+  window = SDL_CreateWindow(LUNAR_MEDIA_NAME,
     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
     600, 500, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if(!window) {
@@ -44,9 +45,13 @@ int gui_init() {
     return gui_quit();
   }
 
-  elements = malloc(sizeof(gui_element_list));
-  elements->cur = NULL;
-  elements->next = NULL;
+  gui_root = malloc(sizeof(gui_element));
+  gui_root->type = FLOW;
+  gui_root->flow.direction = false;
+  gui_root->children = NULL;
+  gui_root->sibling = NULL;
+
+  SDL_AddEventWatch(gui_on_window_resized, NULL);
 
   return 1;
 }
@@ -65,10 +70,6 @@ int gui_quit() {
   return 0;
 }
 
-void gui_get_window_size(int* w, int* h) {
-  SDL_GetWindowSize(window, w, h);
-}
-
 TTF_Font* gui_load_font(char* filename) {
   TTF_Font* font = TTF_OpenFont(filename, 40);
   if(!font) {
@@ -79,18 +80,32 @@ TTF_Font* gui_load_font(char* filename) {
   return font;
 }
 
-void append_element(gui_text_element* element) {
-  gui_element_list* list = elements;
-  while(list->cur != NULL) {
-    list = list->next;
-  }
-  list->cur = element;
-  list->next = malloc(sizeof(gui_element_list));
-  list->next->cur = NULL;
-  list->next->next = NULL;
+void gui_get_window_size(int* w, int* h) {
+  SDL_GetWindowSize(window, w, h);
 }
 
-gui_text_element* gui_create_text_element(TTF_Font* font, char* string, int x, int y) {
+int gui_on_window_resized(void* userdata, SDL_Event* event) {
+  if(event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
+    // TODO: technically this isn't allowed (rendering in the event filter) but it doesn't crash (yet) so ¯\_(ツ)_/¯
+    gui_render();
+  }
+  return 1;
+}
+
+void gui_add_child(gui_element* parent, gui_element* element) {
+  gui_element* cur = parent->children;
+  if(cur == NULL) { // parent has no children, add element as first child
+    parent->children = element;
+  } else {          // parent has 1 or more children, find end of list and add element as sibling
+    while(cur->sibling != NULL) {
+      cur = cur->sibling;
+    }
+    cur->sibling = element;
+  }
+  element->sibling = NULL;
+}
+
+gui_element* gui_create_text_element(TTF_Font* font, char* string) {
   SDL_Color textColor           = { 0x00, 0x00, 0x00, 0xFF };
   SDL_Color textBackgroundColor = { 0xFF, 0xFF, 0xFF, 0xFF };
   SDL_Texture* texture = NULL;
@@ -116,14 +131,94 @@ gui_text_element* gui_create_text_element(TTF_Font* font, char* string, int x, i
     SDL_FreeSurface(textSurface);
   }
 
-  position.x = x;
-  position.y = y;
+  position.x = 0;
+  position.y = 0;
 
-  gui_text_element* text = malloc(sizeof(gui_text_element));
-  text->texture = texture;
-  text->position = position;
-  append_element(text);
-  return text;
+  gui_element* element = malloc(sizeof(gui_element));
+  element->type = TEXT;
+  element->text.texture = texture;
+  element->text.position = position;
+  return element;
+}
+
+gui_element* gui_create_flow_element(bool direction) {
+  gui_element* element = malloc(sizeof(gui_element));
+  element->type = FLOW;
+  element->flow.direction = direction;
+  element->children = NULL;
+  element->sibling = NULL;
+  return element;
+}
+
+// renders all of a flow's children
+// TODO: this whole function feels unelegant, but it works just fine and doing it any other way is messier;
+void render_flow(gui_element* flow, int x, int y, SDL_Point* size) {
+  // x or y (depending on flow dir) are adjusted as elements are rendered
+  // width and height are adjusted to contain the whole area of the flow as elements are rendered
+  size->x = 0;
+  size->y = 0;
+
+  // start outline in the top left of the flow
+  SDL_Rect outline;
+  outline.x = x;
+  outline.y = y;
+
+  // margins pt.1
+  x++; y++;
+
+  gui_element* cur = flow->children;
+  bool direction = flow->flow.direction;
+  while(cur != NULL) {
+    int width = 0, height = 0;
+    switch(cur->type) {
+      case TEXT: {
+        cur->text.position.x = x;
+        cur->text.position.y = y;
+        SDL_RenderCopy(renderer, cur->text.texture, NULL, &cur->text.position);
+        width = cur->text.position.w;
+        height = cur->text.position.h;
+        break;
+      }
+      case BUTTON: {
+        printf("rendering button‽, ");
+        break;
+      }
+      case FLOW: {
+        SDL_Point child_flow_size;
+        render_flow(cur, x, y, &child_flow_size);
+        width = child_flow_size.x;
+        height = child_flow_size.y;
+        break;
+      }
+    }
+
+    if(direction) { // if horizontal, add the element's width to the current X pos, and save the highest Y size
+      x += width;
+      size->y = MAX(size->y, height);
+    } else {  // if vertical, add the element's height to the current Y pos, and save the highest X size
+      y += height;
+      size->x = MAX(size->x, width);
+    }
+
+    cur = cur->sibling;
+  }
+
+  // update the component of size that wasn't updated in the above loop
+  if(direction) {
+    size->x = x - outline.x;
+  } else {
+    size->y = y - outline.y;
+  }
+
+  // margins pt.2
+  size->x += 2; size->y += 2;
+
+  // set outline to contain the whole size of the flow
+  outline.w = size->x;
+  outline.h = size->y;
+  // and render it
+  SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, SDL_ALPHA_OPAQUE);
+  SDL_RenderDrawRect(renderer, &outline);
 }
 
 void gui_render() {
@@ -131,11 +226,8 @@ void gui_render() {
   SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
   SDL_RenderClear(renderer);
 
-  gui_element_list* list = elements;
-  while(list->cur != NULL) {
-    SDL_RenderCopy(renderer, list->cur->texture, NULL, &list->cur->position);
-    list = list->next;
-  }
+  SDL_Point size;
+  render_flow(gui_root, 0, 0, &size);
 
   SDL_RenderPresent(renderer);
 }

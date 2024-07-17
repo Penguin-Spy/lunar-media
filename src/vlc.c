@@ -29,8 +29,8 @@ int vlc_init() {
   if(inst == NULL) {
     error("uh oh! instance was NULL: %s\n", libvlc_errmsg());
   }
-  libvlc_set_user_agent(inst, "Lunar media", "lunar-media/alpha-0"); // name shows up in windows "Volume mixer"
-  libvlc_set_app_id(inst, "dev.penguinspy.lunar-media", "alpha-0", "media");
+  libvlc_set_user_agent(inst, LUNAR_MEDIA_NAME, LUNAR_MEDIA_NAME "/" LUNAR_MEDIA_VERSION); // name shows up in windows "Volume mixer"
+  libvlc_set_app_id(inst, LUNAR_MEDIA_ID, LUNAR_MEDIA_VERSION, "media");
 
   // Create the media player
   mp = libvlc_media_player_new(inst);
