@@ -23,6 +23,8 @@
 #include "luautil.h"
 #include "lunar-media.h"
 
+char _error_string_buffer[255];
+
 int main(int argc, char* argv[]) {
   for(int i = 0; i < argc; i++) {
     printf("  argv[%i]: %s\n", i, argv[i]);
@@ -31,7 +33,6 @@ int main(int argc, char* argv[]) {
   vlc_init();
   script_init();
   gui_init();
-  TTF_Font* font = gui_load_font("Montserrat-Regular.ttf");
 
   gui_load_document("theme.xml");
 
@@ -63,7 +64,6 @@ int main(int argc, char* argv[]) {
       case SDL_WINDOWEVENT: {
         if(e.window.event == SDL_WINDOWEVENT_RESIZED || e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
           resized = true;
-          printf("r.");
         }
         break;
       }
@@ -72,7 +72,6 @@ int main(int argc, char* argv[]) {
     if(resized) {
       gui_get_window_size(&window_width, &window_height);
       resized = false;
-      printf("resized!\n");
     }
 
     // TODO: don't re-render if nothing's changed, it causes up to 30% GPU usage unnecessarily
