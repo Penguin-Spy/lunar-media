@@ -17,6 +17,10 @@ gui_element* gui_root = NULL;
 TTF_Font* default_font;
 TTF_Font* fallback_font;
 
+int colors_r[] = { 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0xFF };
+int colors_g[] = { 0x00, 0x00, 0x80, 0xFF, 0xFF, 0xFF, 0x00, 0x00 };
+int colors_b[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF };
+
 int gui_init() {
   if(SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL2 could not be initialized!\n"
@@ -36,7 +40,7 @@ int gui_init() {
 
   window = SDL_CreateWindow(LUNAR_MEDIA_NAME,
     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-    1000, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    1400, 800, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if(!window) {
     printf("Window could not be created!\n"
       "SDL_Error: %s\n", SDL_GetError());
@@ -282,21 +286,21 @@ void gui_load_document(char* filename) {
   gui_add_child(gui_root, load_xml_item(body));
 }
 
-// renders all of a flow's children
-// TODO: this whole function feels unelegant, but it works just fine and doing it any other way is messier;
-void render_flow(gui_element* flow, int x, int y, SDL_Point* size) {
+/**
+ * renders all of a flow's children
+ * @param available_area  input: `x,y` top left, `w,h` width/height of maximum area the element can use up;
+                          output: used area: `w,h` how much space the element actually used of its alloted space
+ */
+void render_flow(gui_element* flow, SDL_Rect* available_area, int level) {
   // x or y (depending on flow dir) are adjusted as elements are rendered
   // width and height are adjusted to contain the whole area of the flow as elements are rendered
-  size->x = 0;
-  size->y = 0;
+  int x = available_area->x;
+  int y = available_area->y;
+  int used_width = 0;
+  int used_height = 0;
 
-  // start outline in the top left of the flow
-  SDL_Rect outline;
-  outline.x = x;
-  outline.y = y;
-
-  // margins pt.1
-  x++; y++;
+  //SDL_SetRenderDrawColor(renderer, 0x00, 0xff, 0x00, SDL_ALPHA_OPAQUE);
+  //SDL_RenderDrawRect(renderer, available_area);
 
   gui_element* cur = flow->children;
   bool direction = flow->flow.direction;
@@ -316,20 +320,32 @@ void render_flow(gui_element* flow, int x, int y, SDL_Point* size) {
         break;
       }
       case FLOW: {
-        SDL_Point child_flow_size;
-        render_flow(cur, x, y, &child_flow_size);
-        width = child_flow_size.x;
-        height = child_flow_size.y;
+        SDL_Rect child_flow_area;
+        child_flow_area.x = x + 1;
+        child_flow_area.y = y + 1;
+        child_flow_area.w = available_area->w - (x - available_area->x) - 2; // available area minus (used area: current pos - inital pos) minus margins
+        child_flow_area.h = available_area->h - (y - available_area->y) - 2;
+        render_flow(cur, &child_flow_area, level + 1);
+        if(cur->width > 0) {
+          width = available_area->w * cur->width / 100;
+        } else {
+          width = child_flow_area.w + 2;
+        }
+        if(cur->height > 0) {
+          height = available_area->h * cur->height / 100;
+        } else {
+          height = child_flow_area.h + 2;
+        }
         break;
       }
     }
 
     if(direction) { // if horizontal, add the element's width to the current X pos, and save the highest Y size
       x += width;
-      size->y = MAX(size->y, height);
+      used_height = MAX(used_height, height);
     } else {  // if vertical, add the element's height to the current Y pos, and save the highest X size
       y += height;
-      size->x = MAX(size->x, width);
+      used_width = MAX(used_width, width);
     }
 
     cur = cur->sibling;
@@ -337,20 +353,21 @@ void render_flow(gui_element* flow, int x, int y, SDL_Point* size) {
 
   // update the component of size that wasn't updated in the above loop
   if(direction) {
-    size->x = x - outline.x;
+    used_width = x - available_area->x;
   } else {
-    size->y = y - outline.y;
+    used_height = y - available_area->y;
   }
 
-  // margins pt.2
-  size->x += 2; size->y += 2;
+  // use the area rect to pass the used area to the caller
+  available_area->w = used_width;
+  available_area->h = used_height;
 
-  // set outline to contain the whole size of the flow
-  outline.w = size->x;
-  outline.h = size->y;
-  // and render it
-  SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, SDL_ALPHA_OPAQUE);
-  SDL_RenderDrawRect(renderer, &outline);
+  // render debugging outline of flow's used area
+  SDL_SetRenderDrawColor(renderer, colors_r[level], colors_g[level], colors_b[level], SDL_ALPHA_OPAQUE);
+  SDL_RenderDrawRect(renderer, available_area);
+  SDL_SetRenderDrawColor(renderer, colors_r[level], colors_g[level], colors_b[level], 0x7F);
+  //SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+  //SDL_RenderFillRect(renderer, available_area);
 }
 
 void gui_render() {
@@ -358,8 +375,10 @@ void gui_render() {
   SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
   SDL_RenderClear(renderer);
 
-  SDL_Point size;
-  render_flow(gui_root, 0, 0, &size);
+  SDL_Rect area;
+  area.x = 0; area.y = 0;
+  gui_get_window_size(&area.w, &area.h);
+  render_flow(gui_root, &area, 1);
 
   SDL_RenderPresent(renderer);
 }

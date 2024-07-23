@@ -5,33 +5,31 @@
     <font name="headings" src="MontserratAlternates-Regular.ttf" size="48"/>
     <sprite name="track_list" type="9-slice" src="track_list.png"/>
   </head>
-  <body>
-    <flow direction="horizontal">
-      <flow direction="vertical" width="80%" background="@track_list">
-        <!-- track list -->
-        <label>1-01 Opening.mp3</label>
-        <label>2-18 I Am Octavio (I am Octavio).mp3</label>
-        <label>2-19 Calamari Inkantation (シオカラ節).mp3</label>
-      </flow>
-      <flow direction="vertical" width="20%">
-        <!-- track title -->
-        <label text-align="center" font="headings">シオカラ節</label>
-        <section id="track_info">
-          <layout>
-            <!-- track properties -->
-            <label>Artist - シオカラーズ (keity.pop, 菊間まり)</label>
-            <label>Album - Splatune (Splatoon Original Soundtrack)</label>
-            <label>Length - 2:34</label>
-          </layout>
-          <layout>
-            <!-- track lyrics -->
-            <label>ya weni marei mirekyarahire</label>
-            <label>juri yu mirukerason</label>
-          </layout>
-        </section>
-        <!-- track artwork -->
-        <img fit="contain" src="@artwork"/>
-      </flow>
+  <body direction="horizontal">
+    <flow direction="vertical" width="70%" background="@track_list">
+      <!-- track list -->
+      <label>1-01 Opening.mp3</label>
+      <label>2-18 I Am Octavio (I am Octavio).mp3</label>
+      <label>2-19 Calamari Inkantation (シオカラ節).mp3</label>
+    </flow>
+    <flow direction="vertical" width="30%">
+      <!-- track title -->
+      <label text-align="center" font="headings">シオカラ節</label>
+      <section id="track_info">
+        <layout>
+          <!-- track properties -->
+          <label>Artist - シオカラーズ (keity.pop, 菊間まり)</label>
+          <label>Album - Splatune (Splatoon Original Soundtrack)</label>
+          <label>Length - 2:34</label>
+        </layout>
+        <layout>
+          <!-- track lyrics -->
+          <label>ya weni marei mirekyarahire</label>
+          <label>juri yu mirukerason</label>
+        </layout>
+      </section>
+      <!-- track artwork -->
+      <img fit="contain" src="@artwork"/>
     </flow>
   </body>
 </theme>
